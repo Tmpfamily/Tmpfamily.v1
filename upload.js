@@ -1,4 +1,10 @@
-require("./global")
+let axios = require('axios')
+let FormData = require('form-data')
+let { fromBuffer } = require('file-type')
+let fetch = require('node-fetch')
+let fs = require('fs')
+let cheerio = require('cheerio')
+const chalk = require('chalk')
 
 async function uptotelegra (Path) {
 	return new Promise (async (resolve, reject) => {
@@ -21,4 +27,12 @@ async function uptotelegra (Path) {
 	})
 }
 
-global.uptotelegra = uptotelegra
+module.exports.uptotelegra = uptotelegra
+
+let file = require.resolve(__filename)
+fs.watchFile(file, () => {
+    fs.unwatchFile(file)
+    console.log(chalk.redBright(`Update ${__filename}`))
+    delete require.cache[file]
+    require(file)
+})

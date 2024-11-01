@@ -1,11 +1,27 @@
-require("./module")
+/**
+   * Create By Mhankbarbar
+   * Contact -
+   * Follow https://github.com/MhankBarBar
+*/
+
+
+const fs = require('fs')
+const { tmpdir } = require("os")
+const Crypto = require("crypto")
+const ff = require('fluent-ffmpeg')
+const webp = require("node-webpmux")
+const path = require("path")
+
 
 async function imageToWebp (media) {
-    const tmpFileOut = path.join(os.tmpdir(), `${crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
-    const tmpFileIn = path.join(os.tmpdir(), `${crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.jpg`)
+
+    const tmpFileOut = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
+    const tmpFileIn = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.jpg`)
+
     fs.writeFileSync(tmpFileIn, media)
+
     await new Promise((resolve, reject) => {
-        ffmpeg(tmpFileIn)
+        ff(tmpFileIn)
             .on("error", reject)
             .on("end", () => resolve(true))
             .addOutputOptions([
@@ -17,6 +33,7 @@ async function imageToWebp (media) {
             .toFormat("webp")
             .save(tmpFileOut)
     })
+
     const buff = fs.readFileSync(tmpFileOut)
     fs.unlinkSync(tmpFileOut)
     fs.unlinkSync(tmpFileIn)
@@ -24,11 +41,14 @@ async function imageToWebp (media) {
 }
 
 async function videoToWebp (media) {
-    const tmpFileOut = path.join(os.tmpdir(), `${crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
-    const tmpFileIn = path.join(os.tmpdir(), `${crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.mp4`)
+
+    const tmpFileOut = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
+    const tmpFileIn = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.mp4`)
+
     fs.writeFileSync(tmpFileIn, media)
+
     await new Promise((resolve, reject) => {
-        ffmpeg(tmpFileIn)
+        ff(tmpFileIn)
             .on("error", reject)
             .on("end", () => resolve(true))
             .addOutputOptions([
@@ -51,6 +71,7 @@ async function videoToWebp (media) {
             .toFormat("webp")
             .save(tmpFileOut)
     })
+
     const buff = fs.readFileSync(tmpFileOut)
     fs.unlinkSync(tmpFileOut)
     fs.unlinkSync(tmpFileIn)
@@ -59,12 +80,13 @@ async function videoToWebp (media) {
 
 async function writeExifImg (media, metadata) {
     let wMedia = await imageToWebp(media)
-    const tmpFileIn = path.join(os.tmpdir(), `${crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
-    const tmpFileOut = path.join(os.tmpdir(), `${crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
+    const tmpFileIn = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
+    const tmpFileOut = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
     fs.writeFileSync(tmpFileIn, wMedia)
+
     if (metadata.packname || metadata.author) {
         const img = new webp.Image()
-        const json = { "sticker-pack-name": metadata.packname, "sticker-pack-publisher": metadata.author, "emojis": metadata.categories ? metadata.categories : [""] }
+        const json = { "sticker-pack-id": `https://github.com/nazedev/naze`, "sticker-pack-name": metadata.packname, "sticker-pack-publisher": metadata.author, "emojis": metadata.categories ? metadata.categories : [""] }
         const exifAttr = Buffer.from([0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x41, 0x57, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00])
         const jsonBuff = Buffer.from(JSON.stringify(json), "utf-8")
         const exif = Buffer.concat([exifAttr, jsonBuff])
@@ -79,12 +101,13 @@ async function writeExifImg (media, metadata) {
 
 async function writeExifVid (media, metadata) {
     let wMedia = await videoToWebp(media)
-    const tmpFileIn = path.join(os.tmpdir(), `${crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
-    const tmpFileOut = path.join(os.tmpdir(), `${crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
+    const tmpFileIn = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
+    const tmpFileOut = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
     fs.writeFileSync(tmpFileIn, wMedia)
+
     if (metadata.packname || metadata.author) {
         const img = new webp.Image()
-        const json = { "sticker-pack-name": metadata.packname, "sticker-pack-publisher": metadata.author, "emojis": metadata.categories ? metadata.categories : [""] }
+        const json = { "sticker-pack-id": `https://github.com/nazedev/naze`, "sticker-pack-name": metadata.packname, "sticker-pack-publisher": metadata.author, "emojis": metadata.categories ? metadata.categories : [""] }
         const exifAttr = Buffer.from([0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x41, 0x57, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00])
         const jsonBuff = Buffer.from(JSON.stringify(json), "utf-8")
         const exif = Buffer.concat([exifAttr, jsonBuff])
@@ -99,12 +122,13 @@ async function writeExifVid (media, metadata) {
 
 async function writeExif (media, metadata) {
     let wMedia = /webp/.test(media.mimetype) ? media.data : /image/.test(media.mimetype) ? await imageToWebp(media.data) : /video/.test(media.mimetype) ? await videoToWebp(media.data) : ""
-    const tmpFileIn = path.join(os.tmpdir(), `${crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
-    const tmpFileOut = path.join(os.tmpdir(), `${crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
+    const tmpFileIn = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
+    const tmpFileOut = path.join(tmpdir(), `${Crypto.randomBytes(6).readUIntLE(0, 6).toString(36)}.webp`)
     fs.writeFileSync(tmpFileIn, wMedia)
+
     if (metadata.packname || metadata.author) {
         const img = new webp.Image()
-        const json = { "sticker-pack-name": metadata.packname, "sticker-pack-publisher": metadata.author, "emojis": metadata.categories ? metadata.categories : [""] }
+        const json = { "sticker-pack-id": `https://github.com/nazedev/naze`, "sticker-pack-name": metadata.packname, "sticker-pack-publisher": metadata.author, "emojis": metadata.categories ? metadata.categories : [""] }
         const exifAttr = Buffer.from([0x49, 0x49, 0x2A, 0x00, 0x08, 0x00, 0x00, 0x00, 0x01, 0x00, 0x41, 0x57, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0x00, 0x00, 0x00])
         const jsonBuff = Buffer.from(JSON.stringify(json), "utf-8")
         const exif = Buffer.concat([exifAttr, jsonBuff])
@@ -117,16 +141,4 @@ async function writeExif (media, metadata) {
     }
 }
 
-global.imageToWebp = imageToWebp
-global.videoToWebp = videoToWebp
-global.writeExifImg = writeExifImg
-global.writeExifVid = writeExifVid
-global.writeExif = writeExif
-
-let file = require.resolve(__filename)
-fs.watchFile(file, () => {
-	fs.unwatchFile(file)
-	console.log(chalk.redBright(`Update ${__filename}`))
-	delete require.cache[file]
-	require(file)
-})
+module.exports = { imageToWebp, videoToWebp, writeExifImg, writeExifVid, writeExif }
